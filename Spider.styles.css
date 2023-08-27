@@ -70,3 +70,11 @@ img[b-ndqfol4j3m] {
     opacity: 50%;
     filter: blur(1px);
 }
+
+.w3-col[b-ndqfol4j3m] {
+    width: 9.999%;
+}
+
+.w3-row-padding > .w3-col[b-ndqfol4j3m] {
+    padding: 0 2px;
+}
