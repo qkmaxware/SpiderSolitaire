@@ -1,0 +1,72 @@
+/* /Shared/Game.razor.rz.scp.css */
+.play-area[b-1o7hostzwn] {
+    outline: none;
+    cursor: pointer;
+}
+.play-area:focus[b-1o7hostzwn] {
+    outline: none;
+}
+/* /Shared/Logo.razor.rz.scp.css */
+.header[b-4u8jcrwdpt] {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+img[b-4u8jcrwdpt] {
+    margin-top: -12px;
+}
+.text[b-4u8jcrwdpt] {
+    display: inline-block;
+    border-radius: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    background-color: rgb(36, 36, 36);
+}
+span[b-4u8jcrwdpt] {  
+    font-weight: bolder;
+    font-size: 32px;
+    color: rgb(255, 0, 0);
+    user-select: none;
+    display: inline-block;
+}
+
+@media (max-width: 480px) {
+    span[b-4u8jcrwdpt] {
+        font-size: 50%;
+    }   
+}
+/* /Shared/MainLayout.razor.rz.scp.css */
+footer#attribution[b-hopux7zogp] {
+    padding-left: 64px; 
+    padding-right: 64px;
+    pointer-events: none;
+    user-select: none;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+/* /Shared/SpiderDrawer.razor.rz.scp.css */
+img[b-ndqfol4j3m] {
+    width: 100%;
+}
+.card[b-ndqfol4j3m] {
+    margin-top: -115%;
+    padding: 0;
+}
+.card.selected[b-ndqfol4j3m] {
+    border: 4px solid orange;
+}
+.hoverable[b-ndqfol4j3m] {
+    cursor: pointer;
+}
+.hoverable:hover[b-ndqfol4j3m] {
+    border: 4px solid rgb(40, 147, 255);
+}
+.column[b-ndqfol4j3m] {
+
+}
+.column.disabled[b-ndqfol4j3m] {
+    opacity: 50%;
+    filter: blur(1px);
+}
