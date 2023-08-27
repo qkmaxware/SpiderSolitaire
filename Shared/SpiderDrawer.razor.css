@@ -1,0 +1,23 @@
+img {
+    width: 100%;
+}
+.card {
+    margin-top: -115%;
+    padding: 0;
+}
+.card.selected {
+    border: 4px solid orange;
+}
+.hoverable {
+    cursor: pointer;
+}
+.hoverable:hover {
+    border: 4px solid rgb(40, 147, 255);
+}
+.column {
+
+}
+.column.disabled {
+    opacity: 50%;
+    filter: blur(1px);
+}

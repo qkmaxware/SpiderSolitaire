@@ -1,0 +1,33 @@
+<div class="w3-margin-top w3-margin-bottom">
+@if (!ReferenceEquals(Statistics, null) && !ReferenceEquals(Statistics.All, null) && Statistics.All.Count > 0) {
+    foreach (var difficulty in Statistics.All.OrderByDescending(kv => kv.Key)) {
+        <div>
+            <h4 class="back w3-container">@difficulty.Key Suit(s)</h4>
+            <table class="w3-table w3-striped w3-centered">
+                <thead class="w3-border-bottom">
+                    <th>Games Played</th>
+                    <th>Victories</th>
+                    <th>Losses</th>
+                    <th>Fastest Time</th>
+                    <th>Average Time</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@difficulty.Value.GamesPlayed</td>
+                        <td>@difficulty.Value.Victories</td>
+                        <td>@difficulty.Value.Losses()</td>
+                        <td>@TimeSpan.FromSeconds(difficulty.Value.FastestTimeSeconds)</td>
+                        <td>@TimeSpan.FromSeconds(difficulty.Value.AverageTimeSeconds())</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    }
+} else {
+     <span>No games played. Statistics will update here as you play more games.</span>
+}
+</div>
+
+@code {
+    [Parameter] public Statistics? Statistics {get; set;}
+}

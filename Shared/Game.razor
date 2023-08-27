@@ -1,0 +1,363 @@
+@using Qkmaxware.Games.Data
+@inject IJSRuntime js
+
+<Menu @ref="menu">
+    <MainMenu>
+        <button class="w3-button w3-round w3-margin-bottom w3-animate-opacity w3-white" style="width: 100%" @onclick=@(() => menu?.GotoGameOptions())>Play Now</button><br>
+        <button class="w3-button w3-round w3-margin-bottom w3-animate-opacity w3-white" style="width: 100%" @onclick=@(() => menu?.GotoStatistics())>Statistics</button><br>
+    </MainMenu>
+    <PlayOptions>
+        <button class="w3-button w3-round w3-margin-bottom w3-animate-opacity w3-white" style="width: 100%" @onclick=@(() => { newGame(no_change); menu?.GotoGameplay(); })>4 Suits</button><br>
+        <button class="w3-button w3-round w3-margin-bottom w3-animate-opacity w3-white" style="width: 100%" @onclick=@(() => { newGame(two_suit_change); menu?.GotoGameplay(); })>2 Suits</button><br>
+        <button class="w3-button w3-round w3-margin-bottom w3-animate-opacity w3-white" style="width: 100%" @onclick=@(() => { newGame(one_suit_change); menu?.GotoGameplay(); })>1 Suits</button><br>
+    </PlayOptions>
+    <Statistics>
+        <StatisticsRenderer Statistics=@gameStats></StatisticsRenderer>
+    </Statistics>
+    <Gameplay>
+        <div class="w3-center">
+            <Timer @ref="gameTimer"></Timer>
+        </div>
+        <div class="w3-center w3-margin-bottom">
+            @if (this.game.IsGameOver()) {
+                <button class="w3-button w3-white w3-round w3-margin-left w3-margin-right" @onclick=@(() => { menu?.GotoRoot(); })>
+                    Play Again?
+                </button>
+            } else {
+                <button class="w3-button w3-white w3-round w3-margin-left w3-margin-right" @onclick=showUndoModal><img src="icons/undo.svg" style="height: 1em;"> Undo</button>
+                <button class="w3-button w3-red w3-round w3-margin-left w3-margin-right" @onclick=ohNo>
+                    &times; Forfeit
+                </button>
+            }
+        </div>
+        <SpiderDrawer @ref=board Playing=@game OnDeal=deal OnClick=selectCard></SpiderDrawer>
+    </Gameplay>
+</Menu>
+
+<Modal @ref=undoModal>
+    <Head>
+         <h2 class="w3-center no-select">Undo Move?</h2>
+    </Head>
+    <Body>
+        <p class="w3-center">Would you like to undo the last move and return to the following state?</p>
+        <SpiderDrawer Playing=undoState></SpiderDrawer>
+    </Body>
+    <Footer>
+        <div class="w3-row">
+            <div class="w3-half">
+                <button class="w3-button w3-gray" style="width: 100%; border-bottom-left-radius: 16px">Cancel</button>
+            </div>
+            <div class="w3-half">
+                <button class="w3-button w3-green" style="width: 100%; border-bottom-right-radius: 16px" @onclick=confirmUndo>Confirm Undo</button>
+            </div>
+        </div>
+    </Footer>
+</Modal>
+
+<Modal @ref="success">
+    <Head>
+        <h2 class="w3-center no-select">Congratuations!!</h2>
+        <div class="w3-center">
+            You have finished in @completionTime with @mistakes mistakes.
+        </div>
+    </Head>
+    <Body>
+        <StatisticsRenderer Statistics=@gameStats></StatisticsRenderer>
+    </Body>
+    <Footer>
+        <div class="w3-center w3-padding">
+            <button class="w3-button w3-round w3-gray w3-margin-right" @onclick=@(() => success?.Hide())>Close</button>
+            <button class="w3-button w3-round w3-gray w3-margin-left" @onclick=@(() => { success?.Hide(); menu?.GotoRoot(); })>Close & Return Home</button>
+        </div>
+    </Footer>
+</Modal>
+
+@code {
+    private Statistics? gameStats;
+    private Menu? menu;
+    private Timer? gameTimer;
+    private int mistakes = 0;
+
+    private Modal? success;
+    private TimeSpan completionTime;
+
+    private int difficulty;
+    private SpiderSolitaire game = new SpiderSolitaire();
+    private Stack<SpiderSolitaire> previousMoves = new Stack<SpiderSolitaire>();
+    private SpiderDrawer? board;
+
+    protected override async Task OnAfterRenderAsync(bool first) {
+        if (first) {
+            await loadStats();
+        }
+    }
+
+    private static readonly string saveKey = "spider.statistics.json";
+    private async Task loadStats() {
+        var stats = await js.InvokeAsync<string>("window.localStorage.getItem", saveKey);
+        if (!string.IsNullOrEmpty(stats)) {
+            try {
+                var parsed = System.Text.Json.JsonSerializer.Deserialize<Statistics>(stats);
+                this.gameStats = parsed ?? new Statistics();
+            } catch {
+                this.gameStats = new Statistics();
+            }
+        }
+    }
+
+    private void saveStats() {
+        if (gameStats != null) {
+            js.InvokeVoidAsync("window.localStorage.setItem", saveKey, System.Text.Json.JsonSerializer.Serialize(this.gameStats));
+        }
+    }
+
+    private void newGame(Action<PlayingCard> suitReplacement) {
+        this.board?.ClearSelection();
+        this.board?.ClearHiddenColumns();
+        previousMoves.Clear();
+        var game = new SpiderSolitaire();
+        foreach (var card in game.AllCards) {
+            suitReplacement(card);
+        }
+
+        Dictionary<Suit, int> count = new Dictionary<Suit, int>();
+        foreach (var card in game.AllCards) {
+            if (count.ContainsKey(card.Suit)) {
+                count[card.Suit]++;
+            } else {
+                count[card.Suit] = 1;
+            }
+        }
+        foreach (var kn in count) {
+            Console.WriteLine(kn.Key.Name() + " = " + kn.Value);
+        }
+        this.difficulty = count.Count; // 1 suit, 2 suits ...
+        this.gameTimer?.StartTimer();
+        this.game = game;
+    }
+    private void no_change (PlayingCard card) {}
+    private void two_suit_change (PlayingCard card) {
+        if (card.Suit == Diamonds.Instance) {
+            //Console.WriteLine("Changed diamond to heart");
+            card.ChangeSuit(Hearts.Instance);
+        } else if (card.Suit == Clubs.Instance) {
+            //Console.WriteLine("Changed club to spade");
+            card.ChangeSuit(Spades.Instance);
+        }
+    }
+    private void one_suit_change (PlayingCard card) {
+        if (card.Suit != Spades.Instance) {
+            //Console.WriteLine("Changed " + card.Suit.Name() + " to spade");
+            card.ChangeSuit(Spades.Instance);
+        }
+    }
+
+    private void deal() {
+        for (var i = 0; i < game.Piles.Length; i++) {
+            if (game.Stack.Count > 0) {
+                var card = game.Stack[game.Stack.Count - 1];
+                game.Stack.RemoveAt(game.Stack.Count - 1);
+                game.Piles[i].AddFaceUp(card);
+            }
+        }
+    }
+    private Pile? selectedPile;
+    private List<FaceCard> selected = new List<FaceCard>();
+    int moves = 0;
+    private void selectCard(Pile pile, FaceCard? card) {
+        if (selectedPile != null && selected.Count > 0) {
+            // This is a move or cancel command
+            moveOrCancel(pile, card);
+        } else {
+            // this is a selection command
+            createSelection(pile, card);
+            hideInvalidMoveLocations(pile, this.selected);
+        }
+    }
+    private void hideInvalidMoveLocations(Pile pile, List<FaceCard> selection) {
+        board?.ClearHiddenColumns();
+        foreach (var otherPile in game.Piles) {
+            if (otherPile == pile)
+                continue;
+            
+            var top = otherPile.Top;
+            if (!canPlaceSelectionOnPile(otherPile, selection)) {
+                board?.HideColumn(otherPile);
+            }
+        }
+    }
+    private bool canPlaceSelectionOnPile(Pile p, List<FaceCard> selection) {
+        if (selection.Count < 1)
+            return false;
+
+        var first = selection[0];
+        var top = p.Top;
+        if (ReferenceEquals(top, null) && first.Card.Rank == CardRank.King)
+            return true; // Can always place on an empty pile if it's a king
+
+        if (ReferenceEquals(top, null))
+            return false;
+
+        if (top.Card.Rank > first.Card.Rank) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    private void moveOrCancel(Pile pile, FaceCard? card) {
+        if (selectedPile == null)
+            return;
+
+        if (pile == selectedPile) {
+            cancel();
+        } else {
+            move(selectedPile, selected, pile);
+        }
+    }
+    private void cancel() {
+        this.selectedPile = null;
+        this.selected.Clear();
+        this.board?.ClearSelection();
+        board?.ClearHiddenColumns();
+    }
+    private void move(Pile from, List<FaceCard> cards, Pile to) {
+        if (cards.Count < 1) {
+            cancel();
+            return;
+        }
+
+        if (this.canPlaceSelectionOnPile(to, cards)) {
+            // Add restore state
+            this.previousMoves.Push(new SpiderSolitaire(this.game));
+
+            // DO IT
+            from.RemoveAll(cards);
+            foreach (var c in cards) {
+                to.AddFaceUp(c.Card);
+            }
+            moves++;
+
+            // If old pile has card on top that is face down, flip it up
+            var new_top = from.Top;
+            if (!ReferenceEquals(new_top, null)) {
+                new_top.Expose(); 
+            }
+
+            // Move is done, check if we can score this pile
+            tryScore(to);
+        }
+        cancel();
+    }
+    private void tryScore(Pile p) {
+        // Iterate up from the bottom
+        // If there is a stack of all the same suit && increasing rank up to king delete it
+        // Recursively do this
+        var top = p.Top;
+        if (ReferenceEquals(top, null))
+            return; // Nothing here
+
+        var last = top;
+        List<FaceCard> stack = new List<FaceCard>();
+        stack.Add(last);
+        for (var i = p.CardCount - 2; i >= 0; i--) {
+            var card = p[i];
+            if (card.Facing != Facing.FaceUp)
+                break;
+            if (MatchingSuit(top.Card, card.Card) && (int)card.Card.Rank == ((int)last.Card.Rank + 1)) {
+                last = card;
+                stack.Add(last);
+                continue;
+            } else {
+                break;
+            }
+        }
+        if (top.Card.Rank == CardRank.Ace && last.Card.Rank == CardRank.King && stack.Count == 13) {
+            // Full run
+            // Add to score piles
+            game.AddToScore(stack);     // Add all to score pile
+            foreach (var c in stack) {
+                p.Pop();                // Remove from the pile
+            }
+            // recursively try again since we removed cards
+            tryScore(p);
+        }
+
+        if (this.game.IsGameOver()) {
+            tadah();
+        }
+    }
+    private void createSelection(Pile pile, FaceCard? card) {
+        if (ReferenceEquals(card, null))
+            return;
+
+        // Read all subsequent cards from here to bottom of pile that are the same suit and in decreasing value
+        var startIndex = pile.IndexOf(card);
+        List<FaceCard> cards = new List<FaceCard>();
+        cards.Add(card);
+        var last = card;
+        int i = startIndex + 1;
+        for (; i < pile.CardCount; i++) {
+            var c = pile[i];
+            if (MatchingSuit(card.Card, c.Card) && c.Card.Rank < last.Card.Rank) {
+                cards.Add(c);
+                last = c;
+            } else {
+                break;
+            }
+        }
+        if (i < pile.CardCount) {
+            // Didn't go to the end
+            return;
+        }
+
+        selectedPile = pile;
+        selected.Clear();
+        selected.AddRange(cards);
+        foreach (var c in cards) {
+            board?.Select(c);
+        }
+    }
+
+    private bool MatchingSuit(Qkmaxware.Games.Data.PlayingCard a, PlayingCard b) {
+        return a.Suit == b.Suit; // Exact match for 4 suit games
+    }
+
+
+    private void tadah() {
+        this.gameTimer?.StopTimer();
+        if (ReferenceEquals(this.gameStats, null))
+            this.gameStats = new Statistics();
+        var time = gameTimer?.Ellapsed() ?? TimeSpan.Zero;
+        this.gameStats.AddVictory(this.difficulty, time);
+        this.completionTime = time;
+        this.saveStats();
+        this.success?.Show();
+    }
+    private void ohNo() {
+        if (ReferenceEquals(this.gameStats, null))
+            this.gameStats = new Statistics();
+        this.gameStats?.AddForfeit(this.difficulty);
+        this.saveStats();
+        this.menu?.GotoRoot();
+    }
+
+    private Modal? undoModal;
+    private SpiderSolitaire? undoState;
+    private void showUndoModal() {
+        if (previousMoves.Count > 0) {
+            previousMoves.TryPeek(out undoState);
+            undoModal?.Show();
+        }
+    }
+    private void confirmUndo() {
+        undo();
+        undoModal?.Hide();
+    }
+    public void undo() {
+        cancel();
+        if (this.previousMoves.Count > 0) {
+            this.mistakes++;
+            this.game = this.previousMoves.Pop();
+        }
+    }
+}

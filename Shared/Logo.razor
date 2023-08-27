@@ -1,0 +1,13 @@
+<div class="w3-center header no-select">
+    <img class="w3-animate-zoom" src="favicons/favicon.ico">
+    <div class="text w3-animate-zoom">
+        <span>Solitaire</span>
+        @if (IsDebug) {
+            <sub>DEBUG</sub>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsDebug {get; set;}
+}

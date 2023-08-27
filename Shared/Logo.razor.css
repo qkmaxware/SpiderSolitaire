@@ -1,0 +1,27 @@
+.header {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+img {
+    margin-top: -12px;
+}
+.text {
+    display: inline-block;
+    border-radius: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    background-color: rgb(36, 36, 36);
+}
+span {  
+    font-weight: bolder;
+    font-size: 32px;
+    color: rgb(255, 0, 0);
+    user-select: none;
+    display: inline-block;
+}
+
+@media (max-width: 480px) {
+    span {
+        font-size: 50%;
+    }   
+}

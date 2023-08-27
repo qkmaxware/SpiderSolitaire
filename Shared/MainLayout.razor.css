@@ -1,0 +1,11 @@
+footer#attribution {
+    padding-left: 64px; 
+    padding-right: 64px;
+    pointer-events: none;
+    user-select: none;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
