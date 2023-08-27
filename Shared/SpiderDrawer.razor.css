@@ -21,3 +21,11 @@ img {
     opacity: 50%;
     filter: blur(1px);
 }
+
+.w3-col {
+    width: 9.999%;
+}
+
+.w3-row-padding > .w3-col {
+    padding: 0 2px;
+}

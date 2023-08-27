@@ -4,8 +4,7 @@
 @if (Playing != null) {
 
 <div class="w3-row-padding" style="margin-bottom: 48px;">
-    <div class="w3-col s1">&nbsp;</div>
-    <div class="w3-col s1">
+    <div class="w3-col">
         @if (Playing.Stack.Count > 0) {
         <button class="w3-button w3-flat w3-hover-greyscale" @onclick=deal style="overflow: visible; position: relative; padding: 0; cursor: pointer;">
             <img style="user-select: none; pointer-events: none;" src="@theme.GetBackImageUrl()">
@@ -16,10 +15,10 @@
             <img class="" src="images/Cards/cardSlot.png">
         }
     </div>
-    <div class="w3-col s1">&nbsp;</div>
+    <div class="w3-col">&nbsp;</div>
     @for(var i = 0; i < 8; i++) {
         var score = Playing.GetScorePile(i);
-        <div class="w3-col s1 column">
+        <div class="w3-col column">
             @if (ReferenceEquals(score, null) || ReferenceEquals(score.Top, null)) {
                 <img class="" src="images/Cards/cardSlot.png">
             } else {
@@ -27,14 +26,12 @@
             }
         </div>
     }
-    <div class="w3-col s1">&nbsp;</div>
 </div>
 
 <div class="w3-row-padding">
-    <div class="w3-col s1">&nbsp;</div>
     @foreach (var pile in Playing.Piles) {
         var myPile = pile;
-        <div class="w3-col s1 column @(hidden.Contains(myPile) ? hiddenCss : noneCss)">
+        <div class="w3-col column @(hidden.Contains(myPile) ? hiddenCss : noneCss)">
             <button class="w3-button w3-flat hoverable" style="padding: 0;" @onclick=@(() => select(myPile, null))>
                 <img class="" src="images/Cards/cardSlot.png">
             </button>
@@ -47,7 +44,6 @@
             }
         </div>
     }
-    <div class="w3-col s1">&nbsp;</div>
 </div>
 
 }

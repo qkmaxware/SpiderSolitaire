@@ -31,6 +31,9 @@
             }
         </div>
         <SpiderDrawer @ref=board Playing=@game OnDeal=deal OnClick=selectCard></SpiderDrawer>
+        <div class="w3-margin-top w3-margin-bottom">
+            &nbsp;
+        </div>
     </Gameplay>
 </Menu>
 
@@ -280,6 +283,12 @@
             }
             // recursively try again since we removed cards
             tryScore(p);
+        }
+
+        // If we eliminated cards up to a new face down card, flip it.
+        var new_top = p.Top;
+        if (!ReferenceEquals(new_top, null) && new_top.Facing == Facing.FaceDown) {
+            new_top.Expose();
         }
 
         if (this.game.IsGameOver()) {
